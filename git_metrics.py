@@ -232,6 +232,22 @@ class SaasGitMetrics(GitMetrics):
         return services
 
     def services_hash_history(self):
+        """
+        returns a list of service info objects, where each one
+        contains the following:
+
+        {
+          "hash": "<hash that has been promoted to prod>",
+          "name": "<name of",
+          "url": "<url of the upstream repo>",
+          "commit_ts": <timestamp of the commit>,
+          "upstream_commits": <number of total commits in the upstream repo>,
+          "context": "<name of the context>",
+          "commit": "<commit that introduced the promote to prod of the hash>",
+          "upstream_saas_commit_index": <commit number in upstream of the last
+                                         promoted to prod commit>
+        }
+        """
         services_head = self.services_with_info()
 
         services_history = {

@@ -51,13 +51,18 @@ if __name__ == "__main__":
 
     labels = ['context', 'service']
 
-    g_upstream_commits = Gauge('saas_upstream_commits', '',
+    g_upstream_commits = Gauge('saas_upstream_commits',
+                               'number of commits in the upstream repo',
                                labels, registry=registry)
 
-    g_commit_index = Gauge('saas_commit_index', '',
+    g_commit_index = Gauge('saas_commit_index',
+                           'commit number in upstream of the last promoted to '
+                           'prod commit',
                            labels, registry=registry)
 
-    g_commit_ts = Gauge('saas_commit_ts', '',
+    g_commit_ts = Gauge('saas_commit_ts',
+                        'timestamp of the last promoted to prod commit '
+                        '(in upstream)',
                         labels, registry=registry)
 
     for saas_repo in get_saas_repos(config):
