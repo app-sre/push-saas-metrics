@@ -6,9 +6,11 @@ import os
 
 import toml
 from prometheus_client import CollectorRegistry, Gauge, push_to_gateway
+from prometheus_client.exposition import basic_auth_handler
 
 from git_metrics import SaasGitMetrics
 from gql import GqlApi
+import vault_client
 
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
@@ -44,8 +46,30 @@ def get_saas_repos(config):
     ]
 
 
+def init_vault_client(config):
+    v_server = config['vault']['server']
+    v_role_id = config['vault']['role_id']
+    v_secret_id = config['vault']['secret_id']
+    vault_client.init(v_server, v_role_id, v_secret_id)
+
+
+def pgw_auth_handler(pgw_config):
+    def my_auth_handler(url, method, timeout, headers, data):
+        return basic_auth_handler(url,
+                                  method,
+                                  timeout,
+                                  headers,
+                                  data,
+                                  pgw_config['username'],
+                                  pgw_config['password'])
+
+    return my_auth_handler
+
+
 if __name__ == "__main__":
     config = toml.loads(base64.b64decode(os.environ['CONFIG_TOML']))
+    init_vault_client(config)
+    pgw_config = vault_client.read_all(config['pushgateway']['secret_path'])
 
     registry = CollectorRegistry()
 
@@ -92,4 +116,5 @@ if __name__ == "__main__":
 
     push_to_gateway(config['pushgateway']['server'],
                     job='saas_metrics',
-                    registry=registry)
+                    registry=registry,
+                    handler=pgw_auth_handler(pgw_config))
