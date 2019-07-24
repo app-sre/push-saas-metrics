@@ -1,4 +1,5 @@
 IMAGE_NAME := quay.io/app-sre/push-saas-metrics
+IMAGE_TAG := $(shell git rev-parse --short=7 HEAD)
 
 .PHONY: build
 build:
