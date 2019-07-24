@@ -15,6 +15,10 @@ class GitCommandError(Exception):
     pass
 
 
+class SaasConfigReadError(Exception):
+    pass
+
+
 class GitMetrics(object):
     def __init__(self, repo, **kwargs):
         self.repo = self._canonicalize_url(repo)
@@ -159,7 +163,12 @@ class SaasGitMetrics(GitMetrics):
         self.cache = kwds.get('cache', False)
         self.upstream_repo_metrics = {}
 
-        config = yaml.safe_load(self.get_file('HEAD', 'config.yaml'))
+        try:
+            config_yaml = self.get_file('HEAD', 'config.yaml')
+        except GitCommandError:
+            raise SaasConfigReadError()
+
+        config = yaml.safe_load(config_yaml)
         self.contexts = config['contexts']
 
     def get_yaml(self, commit, path):
@@ -276,8 +285,6 @@ class SaasGitMetrics(GitMetrics):
             for service_tuple, service in services_head.items():
                 if service_tuple in services_found:
                     continue
-
-                context_name, service_name = service_tuple
 
                 try:
                     commit_hash = services_commit[service_tuple]['hash']

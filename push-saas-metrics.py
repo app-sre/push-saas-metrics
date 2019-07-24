@@ -1,14 +1,15 @@
-#!/usr/bin/env
+#!/usr/bin/env python
 
 import base64
 import logging
 import os
+import sys
 
 import toml
 from prometheus_client import CollectorRegistry, Gauge, push_to_gateway
 from prometheus_client.exposition import basic_auth_handler
 
-from git_metrics import SaasGitMetrics
+from git_metrics import SaasGitMetrics, SaasConfigReadError
 from gql import GqlApi
 import vault_client
 
@@ -92,7 +93,12 @@ if __name__ == "__main__":
     for saas_repo in get_saas_repos(config):
         logging.info(['processing', saas_repo])
 
-        sgm_repo = SaasGitMetrics(saas_repo, POOL_SIZE, cache=CACHE_DIR)
+        try:
+            sgm_repo = SaasGitMetrics(saas_repo, POOL_SIZE, cache=CACHE_DIR)
+        except SaasConfigReadError:
+            logging.error('cannot read config.yaml')
+            sys.exit(1)
+
         services = sgm_repo.services_hash_history()
 
         for s in services:
@@ -114,7 +120,7 @@ if __name__ == "__main__":
                 service=name
             ).set(s['commit_ts'])
 
-    push_to_gateway(config['pushgateway']['server'],
+    push_to_gateway(pgw_config['server'],
                     job='saas_metrics',
                     registry=registry,
                     handler=pgw_auth_handler(pgw_config))
