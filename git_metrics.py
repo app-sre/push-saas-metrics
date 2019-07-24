@@ -150,10 +150,25 @@ class GitMetrics(object):
         if len(short_repo_split) != 2:
             raise Exception("Expecting only two components {}".format(repo))
 
-        return "{}-{}".format(provider, "-".join(short_repo_split))
+        org, repo = short_repo_split
+
+        # remove '.git'
+        suffix = '.git'
+        assert repo.endswith(suffix)
+        repo = repo[:-len(suffix)]
+
+        return "{}-{}-{}".format(provider, org, repo)
 
     def _canonicalize_url(self, repo):
-        return re.sub(r'(\.git)?(/)?$', '', repo)
+        # remove '/' suffix if it exists
+        if repo[-1] == '/':
+            repo = repo[:-1]
+
+        # add '.git' if necessary
+        if not repo.endswith('.git'):
+            repo = repo + '.git'
+
+        return repo
 
 
 class SaasGitMetrics(GitMetrics):
