@@ -1,6 +1,12 @@
 IMAGE_NAME := quay.io/app-sre/push-saas-metrics
 IMAGE_TAG := $(shell git rev-parse --short=7 HEAD)
 
+ifneq (,$(wildcard $(CURDIR)/.docker))
+	DOCKER_CONF := $(CURDIR)/.docker
+else
+	DOCKER_CONF := $(HOME)/.docker
+endif
+
 .PHONY: build
 build:
 	@docker build -t $(IMAGE_NAME):latest .
