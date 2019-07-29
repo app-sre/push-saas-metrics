@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
     registry = CollectorRegistry()
 
-    labels = ['context', 'service']
+    labels = ['saas_context', 'saas_service']
 
     g_upstream_commits = Gauge('saas_upstream_commits',
                                'number of commits in the upstream repo',
@@ -106,18 +106,18 @@ if __name__ == "__main__":
             name = s['name']
 
             g_upstream_commits.labels(
-                context=context,
-                service=name
+                saas_context=context,
+                saas_service=name
             ).set(s['upstream_commits'])
 
             g_commit_index.labels(
-                context=context,
-                service=name
+                saas_context=context,
+                saas_service=name
             ).set(s['upstream_saas_commit_index'])
 
             g_commit_ts.labels(
-                context=context,
-                service=name
+                saas_context=context,
+                saas_service=name
             ).set(s['commit_ts'])
 
     push_to_gateway(pgw_config['server'],
