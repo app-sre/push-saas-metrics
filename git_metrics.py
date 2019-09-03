@@ -193,7 +193,7 @@ class SaasGitMetrics(GitMetrics):
     def get_services(self, commit, path):
         try:
             services_file = self.get_yaml(commit, path)
-        except GitCommandError:
+        except (GitCommandError, yaml.scanner.ScannerError):
             return []
 
         if not isinstance(services_file, dict):
