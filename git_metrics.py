@@ -71,7 +71,7 @@ class GitMetrics(object):
         logging.info(['pulling', self.repo])
 
         if self.bare:
-            self._git_command(["fetch", "-q"])
+            self._git_command(["fetch", "-q", "origin", "master"])
             self._git_command(["update-ref", "HEAD", "FETCH_HEAD"])
         else:
             self._git_command(["pull", "-q"])
