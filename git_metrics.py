@@ -243,6 +243,8 @@ class SaasGitMetrics(GitMetrics):
         for (context_name, _), service in services.items():
             url = self._canonicalize_url(service['url'])
             h = service['hash']
+            if not h:
+                h = "HEAD"
 
             upstream_commits = repo_metrics[url].count()
             upstream_saas_commit_index = repo_metrics[url].count(h)
