@@ -9,7 +9,7 @@ import toml
 from prometheus_client import CollectorRegistry, Gauge, push_to_gateway
 from prometheus_client.exposition import basic_auth_handler
 
-from git_metrics import SaasGitMetrics, SaasConfigReadError
+from git_metrics import SaasGitMetrics, SaasConfigReadError, GitCommandError
 from gql import GqlApi
 import vault_client
 
@@ -75,6 +75,7 @@ if __name__ == "__main__":
     registry = CollectorRegistry()
 
     labels = ['saas_context', 'saas_service']
+    invalid_labels = ['saas_repo_url']
 
     g_upstream_commits = Gauge('saas_upstream_commits',
                                'number of commits in the upstream repo',
@@ -90,16 +91,35 @@ if __name__ == "__main__":
                         '(in upstream)',
                         labels, registry=registry)
 
-    for saas_repo in get_saas_repos(config):
+    g_invalid_repos = Gauge('saas_invalid_repos',
+                            'repos that could not be processed',
+                            invalid_labels, registry=registry)
+    error = False
+    for saas_repo in get_saas_repos(config)[:2]:
         logging.info(['processing', saas_repo])
 
         try:
             sgm_repo = SaasGitMetrics(saas_repo, POOL_SIZE, cache=CACHE_DIR)
-        except SaasConfigReadError:
-            logging.error('cannot read config.yaml')
-            sys.exit(1)
+            services = sgm_repo.services_hash_history()
+        except Exception as e:
+            if isinstance(e, SaasConfigReadError):
+                logging.error("cannot read config.yaml")
+            elif isinstance(e, GitCommandError):
+                logging.error("git command error")
+                logging.error(str(e))
+            else:
+                logging.error("generic error")
+                logging.error(str(e))
 
-        services = sgm_repo.services_hash_history()
+            # report error saas url
+            g_invalid_repos.labels(
+                saas_repo_url=saas_repo,
+            ).set(1)
+
+            # mark build as error
+            error = True
+
+            continue
 
         for s in services:
             context = s['context']
@@ -124,3 +144,6 @@ if __name__ == "__main__":
                     job='saas_metrics',
                     registry=registry,
                     handler=pgw_auth_handler(pgw_config))
+
+    if error:
+        sys.exit(1)
