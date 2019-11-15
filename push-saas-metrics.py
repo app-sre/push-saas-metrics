@@ -95,7 +95,7 @@ if __name__ == "__main__":
                             'repos that could not be processed',
                             invalid_labels, registry=registry)
     error = False
-    for saas_repo in get_saas_repos(config)[:2]:
+    for saas_repo in get_saas_repos(config):
         logging.info(['processing', saas_repo])
 
         try:
