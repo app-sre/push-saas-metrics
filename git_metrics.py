@@ -199,7 +199,11 @@ class SaasGitMetrics(GitMetrics):
         if not isinstance(services_file, dict):
             return []
 
-        return services_file.get('services', [])
+        services = services_file.get('services', [])
+        if not isinstance(services, list):
+            return []
+
+        return services
 
     def fetch_repo_metrics(self, repo):
         repo_metrics = GitMetrics(repo, bare=True, cache=self.cache)
